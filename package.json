@@ -1,0 +1,36 @@
+{
+  "name": "docker-ip-retrieval",
+  "version": "1.0.0",
+  "description": "A utility to retrieve the public IP addresses of Docker containers",
+  "main": "docker-ip-retrieval.js",
+  "type": "module",
+  "scripts": {
+    "dip": "node docker-ip-retrieval.js"
+  },
+  "bin": {
+    "dip": "./docker-ip-retrieval.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/your-repo.git"
+  },
+  "publishConfig": {
+		"access": "public"
+	},  
+  "keywords": [
+    "docker",
+    "ip",
+    "retrieval",
+    "lookup",
+    "public",
+    "container"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cli-table3": "^0.6.3",
+    "dockerode": "latest",
+    "enquirer": "latest",
+    "esm": "latest"
+  }
+}
