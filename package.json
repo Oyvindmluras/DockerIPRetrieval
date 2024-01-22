@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/your-repo.git"
+    "url": "https://github.com/Oyvindmluras/DockerIPRetrieval.git"
   },
   "publishConfig": {
 		"access": "public"
