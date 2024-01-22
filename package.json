@@ -1,6 +1,6 @@
 {
   "name": "docker-ip-retrieval",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A utility to retrieve the public IP addresses of Docker containers",
   "main": "docker-ip-retrieval.js",
   "type": "module",
@@ -15,8 +15,8 @@
     "url": "https://github.com/Oyvindmluras/DockerIPRetrieval.git"
   },
   "publishConfig": {
-		"access": "public"
-	},  
+    "access": "public"
+  },
   "keywords": [
     "docker",
     "ip",
