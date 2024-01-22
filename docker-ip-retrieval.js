@@ -58,7 +58,7 @@ async function getContainerStatusOrIP(containerId) {
       output = result.output;
     }
   }
-  return [containerData.Name, output];
+  return [containerData.Name.replace('/', ''), output];
 }
 
 async function getContainerNames(containers) {
