@@ -66,7 +66,7 @@ async function getLocation(ip) {
 
 async function getContainerStatus(containerId) {
   const containerData = await docker.getContainer(containerId).inspect();
-  const name = containerData.Name?.replace("/", "") || "Unknown Container";
+  const name = containerData.Name ? containerData.Name.replace("/", "") : "Unknown Container";
   if (!containerData.State.Running) {
     return [name, `Container ${containerData.State.Status}`, "Unknown"];
   }
