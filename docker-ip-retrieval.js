@@ -4,20 +4,11 @@ import Docker from "dockerode";
 import Enquirer from "enquirer";
 import Table from "cli-table3";
 import fetch from "node-fetch";
-import { readFileSync } from "fs";
 
 const docker = new Docker();
 const { AutoComplete } = Enquirer;
 const COL_WIDTHS = [30, 35, 40];
-
-function getAppVersion() {
-  try {
-    const packageJson = JSON.parse(readFileSync("./package.json", "utf8"));
-    return packageJson.version || "Unknown Version";
-  } catch {
-    return "Unknown Version";
-  }
-}
+const VERSION = "1.1.5";
 
 async function isDockerRunning() {
   try {
@@ -107,7 +98,7 @@ function showResults(results) {
 async function checkDockerStatus() {
   const args = process.argv.slice(2);
   if (args.includes("-v")) {
-    console.log(`Version: ${getAppVersion()}`);
+    console.log(`Version: ${VERSION}`);
     return;
   }
   if (!(await isDockerRunning())) {
