@@ -1,125 +1,91 @@
-#!/usr/bin/env node
+// Docker IP Retrieval CLI
+// Retrieves and displays IP addresses of running Docker containers.
 
-import Docker from "dockerode";
-import Enquirer from "enquirer";
-import Table from "cli-table3";
-import fetch from "node-fetch";
 
-const docker = new Docker();
-const { AutoComplete } = Enquirer;
+import { isDockerRunning, getContainerStatus, getContainerMap, getContainerPorts } from "./src/utils.js";
+import { promptContainer, showResults, showPortsTable } from "./src/ui.js";
+
+
 const COL_WIDTHS = [30, 35, 40];
-const VERSION = "1.1.5";
+const VERSION = "1.2.0";
 
-async function isDockerRunning() {
+/**
+ * Lists the ports used by each Docker container.
+ * @param {Object} containerMap
+ */
+async function listContainerPorts(containerMap) {
+  const entries = Object.entries(containerMap);
+  if (!entries.length) {
+    console.log("No Docker containers found.");
+    return;
+  }
+  const portRows = [];
+  for (const [name, id] of entries) {
+    try {
+      const ports = await getContainerPorts(id);
+      portRows.push([
+        name,
+        ports.length ? ports.join("\n") : "No ports exposed"
+      ]);
+    } catch (err) {
+      portRows.push([name, `Error retrieving ports (${err.message || err})`]);
+    }
+  }
+  showPortsTable(portRows);
+}
+
+/**
+ * Prompts user to select containers and retrieves their status.
+ * @param {Object} containerMap - Map of container names to IDs.
+ * @returns {Promise<Array>} Array of container status objects.
+ */
+async function getSelectedContainerResults(containerMap) {
   try {
-    await docker.ping();
-    return true;
-  } catch {
-    return false;
+    const selected = await promptContainer(containerMap);
+    const ids = Object.values(containerMap);
+    if (selected === "All") {
+      return Promise.all(ids.map(getContainerStatus));
+    }
+    return [await getContainerStatus(containerMap[selected])];
+  } catch (err) {
+    console.error("Prompt failed:", err.message || err);
+    process.exit(1);
   }
 }
 
-async function runCommand(containerId, command) {
-  const exec = await docker.getContainer(containerId).exec({
-    Cmd: command,
-    AttachStdout: true,
-    AttachStderr: true,
-  });
-  const stream = await exec.start({ Detach: false });
-  let output = "";
-  for await (const chunk of stream) {
-    output += chunk.toString();
-  }
-  return {
-    output: output.replace(/[^ -~]+/g, "").trim(),
-    exitCode: (await exec.inspect()).ExitCode,
-  };
-}
-
-async function getPublicIP(containerId) {
-  const { output, exitCode } = await runCommand(containerId, [
-    "sh",
-    "-c",
-    "curl -s https://api.ipify.org || wget -qO- https://api.ipify.org",
-  ]);
-  return exitCode === 0 && /^[0-9.]+$/.test(output) ? output : null;
-}
-
-async function getLocation(ip) {
-  try {
-    const response = await fetch(`http://ip-api.com/json/${ip}`);
-    const data = await response.json();
-    return data.status === "fail" ? "Unknown" : `${data.country}, ${data.city}`;
-  } catch {
-    return "Lookup Failed";
-  }
-}
-
-async function getContainerStatus(containerId) {
-  const containerData = await docker.getContainer(containerId).inspect();
-  const name = containerData.Name ? containerData.Name.replace("/", "") : "Unknown Container";
-  if (!containerData.State.Running) {
-    return [name, `Container ${containerData.State.Status}`, "Unknown"];
-  }
-  const ip = await getPublicIP(containerId);
-  return [name, ip ?? "Retrieval failed", ip ? await getLocation(ip) : "Unknown"];
-}
-
-async function mapContainers(containers) {
-  return Object.fromEntries(
-    containers.map(({ Names, Id }) => [Names?.[0]?.replace("/", "") || "Unknown", Id])
-  );
-}
-
-async function getContainerChoices(containerMap) {
-  return [
-    { name: "All", value: "All" },
-    ...Object.keys(containerMap).map((name) => ({ name, value: name })),
-  ];
-}
-
-async function fetchContainerResults(selectedContainer, containers, containerMap) {
-  return selectedContainer === "All"
-    ? Promise.all(containers.map(({ Id }) => getContainerStatus(Id)))
-    : [await getContainerStatus(containerMap[selectedContainer])];
-}
-
-function showResults(results) {
-  const table = new Table({
-    head: ["Container Name", "Public IP Address", "Location"],
-    colWidths: COL_WIDTHS,
-    style: { head: ["green"] },
-    chars: { mid: "", "left-mid": "", "mid-mid": "", "right-mid": "" },
-  });
-  table.push(...results);
-  console.log(table.toString());
-}
-
-async function checkDockerStatus() {
+/**
+ * Main entry point for the CLI.
+ */
+async function main() {
   const args = process.argv.slice(2);
-  if (args.includes("-v")) {
-    console.log(`Version: ${VERSION}`);
+  if (args.includes("-v") || args.includes("--version")) {
+    console.log(`Docker IP Retrieval version: ${VERSION}`);
     return;
   }
+
   if (!(await isDockerRunning())) {
-    console.log("Docker not detected.");
-    return;
+    console.log("Docker is not running or not detected. Please ensure Docker is installed and running.");
+    process.exit(1);
   }
 
   try {
-    const containers = await docker.listContainers({ all: true });
-    const containerMap = await mapContainers(containers);
+    const containerMap = await getContainerMap();
+    if (!Object.keys(containerMap).length) {
+      console.log("No Docker containers found.");
+      return;
+    }
 
-    const selectedContainer = await new AutoComplete({
-      name: "container",
-      message: "Select a Docker container to retrieve its status:",
-      choices: await getContainerChoices(containerMap),
-    }).run();
+    if (args.includes("--ports") || args.includes("-p")) {
+      await listContainerPorts(containerMap);
+      return;
+    }
 
-    showResults(await fetchContainerResults(selectedContainer, containers, containerMap));
+    const results = await getSelectedContainerResults(containerMap);
+    showResults(results, COL_WIDTHS);
   } catch (error) {
-    console.error("Error fetching container data:", error);
+    console.error("Unexpected error:", error.message || error);
+    process.exit(1);
   }
 }
 
-checkDockerStatus();
+main();
