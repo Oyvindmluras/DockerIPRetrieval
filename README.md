@@ -15,7 +15,6 @@ dip
 ```
 You will be prompted to select a Docker container. Choose a specific container or select ‘All’ to fetch the public IPs of all containers.
 
-
-
-
-
+## Available Options
+- `-v`, `--version`    Show version information
+- `-p`, `--ports`      List ports for all containers
