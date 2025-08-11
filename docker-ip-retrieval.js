@@ -1,10 +1,10 @@
-// Docker IP Retrieval CLI
-// Retrieves and displays IP addresses of running Docker containers.
-
-
-import { isDockerRunning, getContainerStatus, getContainerMap, getContainerPorts } from "./src/utils.js";
+import {
+  isDockerRunning,
+  getContainerStatus,
+  getContainerMap,
+  getContainerPorts,
+} from "./src/utils.js";
 import { promptContainer, showResults, showPortsTable } from "./src/ui.js";
-
 
 const COL_WIDTHS = [30, 35, 40];
 const VERSION = "1.2.0";
@@ -25,7 +25,7 @@ async function listContainerPorts(containerMap) {
       const ports = await getContainerPorts(id);
       portRows.push([
         name,
-        ports.length ? ports.join("\n") : "No ports exposed"
+        ports.length ? ports.join("\n") : "No ports exposed",
       ]);
     } catch (err) {
       portRows.push([name, `Error retrieving ports (${err.message || err})`]);
@@ -64,7 +64,9 @@ async function main() {
   }
 
   if (!(await isDockerRunning())) {
-    console.log("Docker is not running or not detected. Please ensure Docker is installed and running.");
+    console.log(
+      "Docker is not running or not detected. Please ensure Docker is installed and running."
+    );
     process.exit(1);
   }
 

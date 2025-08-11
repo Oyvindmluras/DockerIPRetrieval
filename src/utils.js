@@ -1,3 +1,7 @@
+import Docker from "dockerode";
+import fetch from "node-fetch";
+const docker = new Docker();
+
 /**
  * Gets the exposed ports for a Docker container.
  * @param {string} containerId
@@ -13,23 +17,19 @@ export async function getContainerPorts(containerId) {
     // Format: { "80/tcp": [{ HostIp: "0.0.0.0", HostPort: "8080" }], ... }
     return Object.entries(ports)
       .map(([containerPort, bindings]) => {
-        if (!bindings || !Array.isArray(bindings) || !bindings.length) return null;
+        if (!bindings || !Array.isArray(bindings) || !bindings.length)
+          return null;
         return bindings
-          .map(b => `${b.HostIp}:${b.HostPort}->${containerPort}`)
+          .map((b) => `${b.HostIp}:${b.HostPort}->${containerPort}`)
           .join(", ");
       })
       .filter(Boolean);
   } catch (err) {
-    throw new Error(`Failed to get ports for container ${containerId}: ${err.message || err}`);
+    throw new Error(
+      `Failed to get ports for container ${containerId}: ${err.message || err}`
+    );
   }
 }
-// Utility functions for Docker IP Retrieval CLI
-// Handles Docker interaction, container status, and IP/location lookup.
-
-import Docker from "dockerode";
-import fetch from "node-fetch";
-
-const docker = new Docker();
 
 /**
  * Checks if Docker is running and accessible.
@@ -76,7 +76,9 @@ export async function runCommand(containerId, command) {
       exitCode: (await exec.inspect()).ExitCode,
     };
   } catch (err) {
-    throw new Error(`Failed to run command in container ${containerId}: ${err.message || err}`);
+    throw new Error(
+      `Failed to run command in container ${containerId}: ${err.message || err}`
+    );
   }
 }
 
@@ -93,7 +95,11 @@ export async function getContainerOsType(containerId) {
     const containerData = await docker.getContainer(containerId).inspect();
     return containerData?.Os?.toLowerCase?.() || "linux";
   } catch (err) {
-    throw new Error(`Failed to get OS type for container ${containerId}: ${err.message || err}`);
+    throw new Error(
+      `Failed to get OS type for container ${containerId}: ${
+        err.message || err
+      }`
+    );
   }
 }
 
@@ -139,7 +145,9 @@ export async function getContainerStatus(containerId) {
       ip ? await getLocation(ip) : "Unknown",
     ];
   } catch (err) {
-    throw new Error(`Failed to get status for container ${containerId}: ${err.message || err}`);
+    throw new Error(
+      `Failed to get status for container ${containerId}: ${err.message || err}`
+    );
   }
 }
 
@@ -183,7 +191,10 @@ export async function getLocation(ip) {
     return `${data.country}, ${data.city}`;
   } catch (err) {
     if (process.env.DEBUG) {
-      console.error(`[DEBUG] Failed to get location for IP ${ip}:`, err.message || err);
+      console.error(
+        `[DEBUG] Failed to get location for IP ${ip}:`,
+        err.message || err
+      );
     }
     return "Lookup Failed";
   }

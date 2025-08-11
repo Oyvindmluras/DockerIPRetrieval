@@ -1,10 +1,12 @@
+import Enquirer from "enquirer";
+import Table from "cli-table3";
+const { AutoComplete } = Enquirer;
+
 /**
  * Displays a table of container ports.
  * @param {Array} portRows - Array of [containerName, portsString]
  */
 export async function showPortsTable(portRows) {
-  const TableModule = await import("cli-table3");
-  const Table = TableModule.default || TableModule;
   const table = new Table({
     head: ["Container Name", "Ports"],
     colWidths: [30, 60],
@@ -14,13 +16,6 @@ export async function showPortsTable(portRows) {
   table.push(...portRows);
   console.log("\n" + table.toString());
 }
-// UI utilities for Docker IP Retrieval CLI
-// Handles user prompts and result table display.
-
-import Enquirer from "enquirer";
-import Table from "cli-table3";
-
-const { AutoComplete } = Enquirer;
 
 /**
  * Returns choices for the container selection prompt.
